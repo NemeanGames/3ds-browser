@@ -1,0 +1,310 @@
+index.html<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>3DS Browser App</title>
+<style>
+/* Basic CSS */
+body { font-family: sans-serif; margin:0; padding:0; }
+nav { background:#333; color:white; display:flex; }
+nav button { flex:1; padding:10px; border:none; background:#333; color:white; cursor:pointer; }
+section { display:none; padding:10px; }
+section.active { display:block; }
+canvas { border:1px solid #ccc; touch-action: none; }
+</style>
+</head>
+<body>
+<nav>
+<button data-section="chat">Chat</button>
+<button data-section="games">Games</button>
+<button data-section="calendar">Calendar</button>
+<button data-section="notepad">Notepad</button>
+<button data-section="whiteboard">Whiteboard</button>
+</nav>
+<section id="chat" class="active">
+<h2>Chat</h2>
+<div id="chat-messages" style="height:200px; overflow-y:scroll; border:1px solid #ccc; padding:5px;"></div>
+<input id="chat-input" placeholder="Type a message"/><button onclick="sendMessage()">Send</button>
+<p><small>Messages are stored locally and will not sync across devices.</small></p>
+</section>
+<section id="games">
+<h2>Games</h2>
+<div id="game-select">
+<button onclick="showGame('tic')">Tic-Tac-Toe</button>
+<button onclick="showGame('rps')">Rock-Paper-Scissors</button>
+<button onclick="showGame('memory')">Memory</button>
+</div>
+<div id="tic" style="display:none;">
+<!-- Tic Tac Toe board -->
+<table id="tic-board"></table>
+<p id="tic-status"></p>
+<button onclick="resetTic()">Reset</button>
+</div>
+<div id="rps" style="display:none;">
+<button onclick="playRPS('rock')">Rock</button>
+<button onclick="playRPS('paper')">Paper</button>
+<button onclick="playRPS('scissors')">Scissors</button>
+<p id="rps-result"></p>
+</div>
+<div id="memory" style="display:none;">
+<div id="memory-board" style="display:grid; grid-template-columns:repeat(4,50px); gap:5px;"></div>
+<p id="memory-status"></p>
+<button onclick="resetMemory()">Reset</button>
+</div>
+</section>
+<section id="calendar">
+<h2>Calendar</h2>
+<div id="calendar-nav">
+<button onclick="prevMonth()">Prev</button>
+<span id="calendar-month"></span>
+<button onclick="nextMonth()">Next</button>
+</div>
+<table id="calendar-table" border="1"></table>
+</section>
+<section id="notepad">
+<h2>Notepad</h2>
+<textarea id="notepad-text" style="width:100%; height:300px;"></textarea>
+</section>
+<section id="whiteboard">
+<h2>Whiteboard</h2>
+<canvas id="whiteboard-canvas" width="400" height="300"></canvas>
+<button onclick="clearCanvas()">Clear</button>
+</section>
+<script>
+// navigation
+document.querySelectorAll('nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
+    document.getElementById(btn.dataset.section).classList.add('active');
+  });
+});
+
+// Chat
+function loadChat() {
+  const msgs = JSON.parse(localStorage.getItem('chatMessages') || '[]');
+  const list = document.getElementById('chat-messages');
+  list.innerHTML = '';
+  msgs.forEach(m => {
+    const div = document.createElement('div');
+    div.textContent = m;
+    list.appendChild(div);
+  });
+  list.scrollTop = list.scrollHeight;
+}
+function sendMessage() {
+  const input = document.getElementById('chat-input');
+  if (input.value.trim() === '') return;
+  const msgs = JSON.parse(localStorage.getItem('chatMessages') || '[]');
+  msgs.push(input.value.trim());
+  localStorage.setItem('chatMessages', JSON.stringify(msgs));
+  input.value = '';
+  loadChat();
+}
+loadChat();
+
+// Tic Tac Toe
+let ticState, ticCurrent;
+function initTic() {
+  ticState = Array(9).fill(null);
+  ticCurrent = 'X';
+  const board = document.getElementById('tic-board');
+  board.innerHTML = '';
+  for (let i=0; i<3; i++){
+    const tr = document.createElement('tr');
+    for (let j=0; j<3; j++){
+      const td = document.createElement('td');
+      td.textContent = '';
+      td.style.width='50px';td.style.height='50px';td.style.textAlign='center';td.style.verticalAlign='middle';td.style.fontSize='24px';td.style.border='1px solid #ccc';
+      td.addEventListener('click', () => ticClick(i*3+j));
+      tr.appendChild(td);
+    }
+    board.appendChild(tr);
+  }
+  document.getElementById('tic-status').textContent = 'Player X turn';
+}
+function ticClick(index) {
+  if (ticState[index] || checkTicWinner()) return;
+  ticState[index] = ticCurrent;
+  document.getElementById('tic-board').rows[Math.floor(index/3)].cells[index%3].textContent = ticCurrent;
+  if (checkTicWinner()) {
+    document.getElementById('tic-status').textContent = 'Player '+ticCurrent+' wins!';
+    return;
+  } else if (ticState.every(Boolean)) {
+    document.getElementById('tic-status').textContent = 'Draw!';
+    return;
+  }
+  ticCurrent = (ticCurrent === 'X' ? 'O' : 'X');
+  document.getElementById('tic-status').textContent = 'Player '+ticCurrent+' turn';
+}
+function checkTicWinner() {
+  const wins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  return wins.some(w => w.every(i => ticState[i]===ticCurrent));
+}
+function resetTic() { initTic(); }
+initTic();
+function showGame(g) {
+  document.getElementById('tic').style.display='none';
+  document.getElementById('rps').style.display='none';
+  document.getElementById('memory').style.display='none';
+  if (g==='tic') initTic();
+  if (g==='memory') initMemory();
+  document.getElementById(g).style.display='block';
+}
+// Rock-Paper-Scissors
+function playRPS(choice) {
+  const options=['rock','paper','scissors'];
+  const comp=options[Math.floor(Math.random()*3)];
+  let result;
+  if (choice===comp) result='Draw';
+  else if ((choice==='rock'&&comp==='scissors')||(choice==='paper'&&comp==='rock')||(choice==='scissors'&&comp==='paper')) result='You win!';
+  else result='You lose!';
+  document.getElementById('rps-result').textContent = 'You chose '+choice+', computer chose '+comp+'. '+result;
+}
+// Memory Game
+let memoryCards, memoryFlipped, memoryCanFlip;
+function initMemory() {
+  const board = document.getElementById('memory-board');
+  board.innerHTML='';
+  const values = [...Array(8).keys()]; // 0-7, 8 cards (4 pairs)
+  memoryCards = values.concat(values).sort(() => Math.random()-0.5);
+  memoryFlipped = [];
+  memoryCanFlip = true;
+  memoryCards.forEach((v, idx) => {
+    const card = document.createElement('div');
+    card.style.width='50px';card.style.height='50px';card.style.background='#ccc';card.style.display='flex';card.style.alignItems='center';card.style.justifyContent='center';card.style.fontSize='24px';card.style.cursor='pointer';
+    card.dataset.index=idx;
+    card.dataset.value=v;
+    card.addEventListener('click', () => flipCard(card));
+    board.appendChild(card);
+  });
+  document.getElementById('memory-status').textContent='';
+}
+function flipCard(card) {
+  if (!memoryCanFlip || card.textContent) return;
+  card.textContent = card.dataset.value;
+  memoryFlipped.push(card);
+  if (memoryFlipped.length===2) {
+    memoryCanFlip = false;
+    setTimeout(() => {
+      const [c1,c2] = memoryFlipped;
+      if (c1.dataset.value === c2.dataset.value) {
+        c1.style.background='#8f8';c2.style.background='#8f8';
+      } else {
+        c1.textContent=''; c2.textContent='';
+      }
+      memoryFlipped=[]; memoryCanFlip=true;
+      if ([...document.getElementById('memory-board').children].every(c => c.textContent)) {
+        document.getElementById('memory-status').textContent = 'You matched all pairs!';
+      }
+    }, 800);
+  }
+}
+function resetMemory() { initMemory(); }
+// Calendar
+let calDate = new Date();
+function renderCalendar() {
+  const table = document.getElementById('calendar-table');
+  table.innerHTML='';
+  const month=calDate.getMonth();
+  const year=calDate.getFullYear();
+  document.getElementById('calendar-month').textContent = calDate.toLocaleString('default',{month:'long'})+' '+year;
+  const firstDay = new Date(year, month,1).getDay();
+  const daysInMonth = new Date(year, month+1,0).getDate();
+  let row = table.insertRow();
+  const weekdays=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  weekdays.forEach(d => { const cell=row.insertCell(); cell.textContent=d; cell.style.fontWeight='bold';});
+  let day=1;
+  row = table.insertRow();
+  for (let i=0;i<firstDay;i++) row.insertCell().textContent='';
+  for (let i=firstDay;i<7;i++) addDayCell(row,day++);
+  while (day<=daysInMonth) {
+    row = table.insertRow();
+    for (let i=0;i<7&&day<=daysInMonth;i++) addDayCell(row,day++);
+  }
+}
+function addDayCell(row, day) {
+  const cell = row.insertCell();
+  cell.textContent = day;
+  cell.style.cursor='pointer';
+  cell.addEventListener('click', () => editNote(day));
+}
+function prevMonth() { calDate.setMonth(calDate.getMonth()-1); renderCalendar(); }
+function nextMonth() { calDate.setMonth(calDate.getMonth()+1); renderCalendar(); }
+function editNote(day) {
+  const key = calDate.getFullYear()+'-'+calDate.getMonth()+'-'+day;
+  const note = prompt('Enter note for '+(day)+':', localStorage.getItem('calNote-'+key) || '');
+  if (note!==null) {
+    localStorage.setItem('calNote-'+key,note);
+  }
+}
+renderCalendar();
+// Notepad
+const notepad = document.getElementById('notepad-text');
+function loadNotepad() {
+  notepad.value = localStorage.getItem('notepad') || '';
+}
+notepad.addEventListener('input', () => {
+  localStorage.setItem('notepad', notepad.value);
+});
+loadNotepad();
+// Whiteboard
+const canvas = document.getElementById('whiteboard-canvas');
+const ctx = canvas.getContext('2d');
+let drawing=false;
+function startDraw(e) {
+  drawing=true;
+  ctx.beginPath();
+  ctx.moveTo(e.offsetX, e.offsetY);
+}
+function draw(e) {
+  if (!drawing) return;
+  ctx.lineTo(e.offsetX, e.offsetY);
+  ctx.stroke();
+}
+function stopDraw() {
+  drawing=false;
+  saveCanvas();
+}
+canvas.addEventListener('mousedown', startDraw);
+canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('mouseup', stopDraw);
+canvas.addEventListener('mouseleave', stopDraw);
+// Touch events for mobile
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const touch = e.touches[0];
+  drawing = true;
+  ctx.beginPath();
+  ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
+});
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  if (!drawing) return;
+  const rect = canvas.getBoundingClientRect();
+  const touch = e.touches[0];
+  ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
+  ctx.stroke();
+});
+canvas.addEventListener('touchend', (e) => {
+  drawing=false; saveCanvas();
+});
+function clearCanvas() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  saveCanvas();
+}
+function saveCanvas() {
+  localStorage.setItem('whiteboard', canvas.toDataURL());
+}
+function loadCanvas() {
+  const data = localStorage.getItem('whiteboard');
+  if (data) {
+    const img = new Image();
+    img.onload = () => ctx.drawImage(img,0,0);
+    img.src = data;
+  }
+}
+loadCanvas();
+</script>
+</body>
+</html>
