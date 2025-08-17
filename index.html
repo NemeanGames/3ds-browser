@@ -2,379 +2,264 @@
 <html>
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>3DS Family Hub</title>
+<!-- Base styles -->
 <style>
-body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#fafafa;color:#111;}
-.container{max-width:760px;margin:0 auto;padding:8px;}
-header{display:flex;justify-content:space-between;align-items:center;background:#333;color:#fff;padding:6px;border-radius:4px;}
-.brand{font-weight:700;}
-.user-bar{font-size:13px;}
-.user-bar span{margin-right:6px;}
-nav{display:flex;margin-top:6px;}
-nav button{flex:1;padding:8px;border:1px solid #ccc;background:#fff;font-size:14px;cursor:pointer;}
-nav button.active{background:#eee;border-color:#999;}
-main{border:1px solid #ddd;background:#fff;padding:8px;margin-top:6px;min-height:320px;}
-section{display:none;}
-section.active{display:block;}
-#messages{list-style:none;padding:0;margin:0;max-height:160px;overflow-y:auto;border:1px solid #eee;padding:4px;font-size:13px;}
-.controls{margin-top:6px;display:flex;}
-.controls input{flex:1;padding:6px;font-size:14px;border:1px solid #ccc;border-radius:3px;}
-.controls button{padding:6px 10px;margin-left:4px;cursor:pointer;}
-small{font-size:12px;color:#666;}
-#tictactoe-board td{width:40px;height:40px;border:1px solid #ccc;text-align:center;font-size:24px;cursor:pointer;}
-#calendar-table{border-collapse:collapse;width:100%;}
-#calendar-table td{border:1px solid #ccc;padding:4px;min-height:50px;vertical-align:top;font-size:12px;}
-.event{background:#ffeb3b;color:#000;border-radius:3px;padding:1px 2px;margin-top:2px;display:block;font-size:10px;}
-textarea{width:100%;height:200px;}
-#whiteboard-canvas{border:1px solid #ccc;width:100%;height:300px;background:#fff;}
+  body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:#fafafa;color:#111;}
+  .container{max-width:760px;margin:0 auto;padding:8px;}
+  header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;background:#333;color:#fff;padding:6px;border-radius:4px;gap:6px;}
+  .brand{font-weight:700;font-size:18px;}
+  #user-bar{display:flex;flex-wrap:wrap;align-items:center;font-size:14px;gap:4px;}
+  #user-bar label{margin-right:4px;}
+  #user-bar input[type="text"], #user-bar input[type="color"]{padding:4px;font-size:14px;border:1px solid #ccc;border-radius:3px;}
+  #user-bar button{padding:6px 10px;font-size:14px;border:1px solid #aaa;border-radius:3px;background:#fff;color:#000;cursor:pointer;}
+  #user-bar button:disabled{opacity:0.5;cursor:not-allowed;}
+  #ui-msg{font-size:12px;color:#ffd;}
+  nav{display:flex;margin-top:6px;}
+  nav button{flex:1;padding:8px;border:1px solid #ccc;background:#fff;font-size:14px;cursor:pointer;}
+  nav button.active{background:#eee;border-color:#999;}
+  main{border:1px solid #ddd;background:#fff;padding:8px;margin-top:6px;min-height:320px;}
+  section{display:none;}
+  section.active{display:block;}
+  /* Chat */
+  #messages{list-style:none;padding:0;margin:0;max-height:180px;overflow-y:auto;border:1px solid #eee;padding:6px;font-size:13px;}
+  #messages li{padding:2px 0;border-bottom:1px solid #f3f3f3;}
+  .controls{margin-top:6px;display:flex;align-items:center;gap:4px;}
+  .controls input{flex:1;padding:6px;font-size:14px;border:1px solid #ccc;border-radius:3px;}
+  .controls button{padding:6px 10px;font-size:14px;border:1px solid #aaa;border-radius:3px;cursor:pointer;}
+  /* Games */
+  #tictactoe-board td{width:60px;height:60px;border:1px solid #ccc;text-align:center;font-size:26px;cursor:pointer;}
+  /* Calendar */
+  #calendar-header{display:flex;justify-content:space-between;align-items:center;}
+  #calendar-table{width:100%;border-collapse:collapse;margin-top:4px;}
+  #calendar-table th, #calendar-table td{border:1px solid #ccc;padding:4px;min-height:60px;vertical-align:top;font-size:12px;}
+  .event-badge{display:block;background:#ffeb3b;color:#000;border-radius:3px;padding:2px 3px;margin-top:2px;font-size:11px;}
+  /* Notes */
+  #notepad{width:100%;height:200px;}
+  /* Whiteboard */
+  #wb-toolbar{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;}
+  #wb-toolbar .btn{padding:6px 8px;font-size:14px;border:1px solid #aaa;border-radius:3px;background:#fff;cursor:pointer;}
+  #wb-canvas-wrap{border:1px solid #ccc;overflow:hidden;}
+  #whiteboard-canvas{display:block;width:100%;height:320px;background:#fff;}
+  #pixel-grid{display:none;line-height:0;}
+  #pixel-grid .cell{display:inline-block;border:1px solid #eee;vertical-align:top;}
+  /* 3DS compatibility */
+  .compat-3ds nav button{font-size:16px;padding:10px;}
+  .compat-3ds #user-bar input[type="text"], .compat-3ds #user-bar input[type="color"]{font-size:16px;}
+  .compat-3ds #messages{font-size:14px;}
+  .compat-3ds #calendar-table th,.compat-3ds #calendar-table td{font-size:14px;}
+  .compat-3ds .controls input, .compat-3ds .controls button{font-size:16px;padding:8px;}
+  .compat-3ds #whiteboard-canvas{height:280px;}
 </style>
+<!-- Firebase scripts -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 </head>
 <body>
 <div class="container">
-<header>
-<div class="brand">3DS Family Hub</div>
-<div class="user-bar" id="user-bar" style="display:none;">
-<span id="display-user"></span>
-<span id="color-swatch" style="width:16px;height:16px;border:1px solid #444;display:inline-block;"></span>
-<button id="change-user" style="margin-left:6px;">Change</button>
-</div>
-</header>
-<nav>
-<button data-target="chat" class="active">Chat</button>
-<button data-target="games">Games</button>
-<button data-target="calendar">Calendar</button>
-<button data-target="notes">Notes</button>
-<button data-target="whiteboard">Whiteboard</button>
-</nav>
-<main>
-<section id="chat" class="active">
-<ul id="messages"></ul>
-<div class="controls">
-<input id="chat-input" type="text" placeholder="Type a message"/>
-<button id="send-btn">Send</button>
-</div>
-<small>Room: <span id="room-id">family-room</span></small>
-</section>
-<section id="games">
-<h3>Tic-Tac-Toe</h3>
-<table id="tictactoe-board"></table>
-<p id="tic-status"></p>
-<h3>Rock Paper Scissors</h3>
-<div id="rps-area">
-<button class="rps-btn" data-choice="rock">Rock</button>
-<button class="rps-btn" data-choice="paper">Paper</button>
-<button class="rps-btn" data-choice="scissors">Scissors</button>
-<p id="rps-result"></p>
-</div>
-</section>
-<section id="calendar">
-<div style="display:flex;justify-content:space-between;align-items:center;">
-<button id="prev-month">Prev</button>
-<span id="cal-title"></span>
-<button id="next-month">Next</button>
-</div>
-<table id="calendar-table"></table>
-</section>
-<section id="notes">
-<textarea id="notepad"></textarea>
-<div style="margin-top:6px;">
-<button id="save-note">Save</button>
-<button id="load-note">Load</button>
-</div>
-</section>
-<section id="whiteboard">
-<canvas id="whiteboard-canvas" width="600" height="300"></canvas>
-<div style="margin-top:6px;">
-<button id="clear-canvas">Clear</button>
-<button id="save-canvas">Save</button>
-<button id="load-canvas">Load</button>
-<button id="export-canvas">Export PNG</button>
-</div>
-</section>
-</main>
+  <header>
+    <div class="brand">3DS Family Hub</div>
+    <div id="user-bar" role="region" aria-label="User and Room Setup">
+      <label for="username-input">Name</label>
+      <input id="username-input" type="text" maxlength="20" placeholder="Your name" aria-label="Display name"/>
+      <label for="user-color">Color</label>
+      <input id="user-color" type="color" value="#0066cc" aria-label="Profile color"/>
+      <button id="save-user" type="button">Save</button>
+      <label for="room-name" style="margin-left:8px;">Room</label>
+      <input id="room-name" type="text" placeholder="room code" aria-label="Room name"/>
+      <input id="room-pass" type="password" placeholder="password (optional)" aria-label="Room password"/>
+      <button id="join-room" type="button">Join</button>
+      <button id="create-room" type="button">Create</button>
+      <span id="ui-msg" aria-live="polite"></span>
+    </div>
+  </header>
+  <nav>
+    <button data-target="chat" class="active">Chat</button>
+    <button data-target="games">Games</button>
+    <button data-target="calendar">Calendar</button>
+    <button data-target="notes">Notes</button>
+    <button data-target="whiteboard">Whiteboard</button>
+  </nav>
+  <main>
+    <section id="chat" class="active">
+      <ul id="messages"></ul>
+      <div class="controls">
+        <input id="chat-input" type="text" placeholder="Type a message"/>
+        <button id="send-btn" type="button">Send</button>
+      </div>
+      <small>Room: <span id="room-label">family-room</span></small>
+      <div id="members-list" style="margin-top:6px;font-size:12px;"></div>
+    </section>
+    <section id="games">
+      <h3>Tic-Tac-Toe</h3>
+      <table id="tictactoe-board"></table>
+      <p id="tic-status"></p>
+      <h3>Rock Paper Scissors</h3>
+      <div id="rps-area">
+        <button class="rps-btn" data-choice="rock">Rock</button>
+        <button class="rps-btn" data-choice="paper">Paper</button>
+        <button class="rps-btn" data-choice="scissors">Scissors</button>
+        <p id="rps-result"></p>
+      </div>
+    </section>
+    <section id="calendar">
+      <div id="calendar-header">
+        <button id="prev-month">Prev</button>
+        <span id="cal-title"></span>
+        <button id="next-month">Next</button>
+      </div>
+      <table id="calendar-table"></table>
+    </section>
+    <section id="notes">
+      <textarea id="notepad" placeholder="Type notes here..."></textarea>
+      <div style="margin-top:6px;">
+        <button id="save-note" type="button">Save</button>
+        <button id="load-note" type="button">Load</button>
+      </div>
+    </section>
+    <section id="whiteboard">
+      <div id="wb-toolbar">
+        <button class="btn" data-mode="brush">Brush</button>
+        <button class="btn" data-mode="eraser">Eraser</button>
+        <button class="btn" data-mode="text">Text</button>
+        <button class="btn" data-mode="stamp">Stamp</button>
+        <label>Color <input id="wb-color" type="color" value="#000000"/></label>
+        <label>Size
+          <select id="wb-size">
+            <option value="2">2</option>
+            <option value="4">4</option>
+            <option value="6" selected>6</option>
+            <option value="10">10</option>
+          </select>
+        </label>
+        <label>Mode
+          <select id="wb-mode">
+            <option value="canvas">Canvas</option>
+            <option value="pixel">Pixel</option>
+          </select>
+        </label>
+        <button id="wb-undo" class="btn">Undo</button>
+        <button id="wb-redo" class="btn">Redo</button>
+        <button id="wb-clear" class="btn">Clear</button>
+        <button id="wb-save" class="btn">Save</button>
+        <button id="wb-export" class="btn">Export</button>
+      </div>
+      <div id="wb-canvas-wrap">
+        <canvas id="whiteboard-canvas" width="640" height="320"></canvas>
+        <div id="pixel-grid"></div>
+      </div>
+    </section>
+  </main>
 </div>
 <script>
 // Firebase config
 var FIREBASE_CONFIG = {
- apiKey: "AIzaSyCtnsy5Cbyi9XI6gGDAMNeXYDd5fL9KtU",
- authDomain: "nemeangames-family-hub.firebaseapp.com",
- projectId: "nemeangames-family-hub",
- storageBucket: "nemeangames-family-hub.appspot.com",
- messagingSenderId: "12189760130",
- appId: "1:12189760130:web:cfb25bad82f963a9623e2b"
+  apiKey: "AIzaSyCtnsy5Cbyi9XI6gGDAMNeXYDd5fL9KtU",
+  authDomain: "nemeangames-family-hub.firebaseapp.com",
+  projectId: "nemeangames-family-hub",
+  storageBucket: "nemeangames-family-hub.appspot.com",
+  messagingSenderId: "12189760130",
+  appId: "1:12189760130:web:cfb25bad82f963a9623e2b"
 };
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
-firebase.auth().signInAnonymously().catch(function(err){console.log(err);});
-
-// UI nav
-document.querySelectorAll('nav button').forEach(btn=>{
- btn.addEventListener('click',function(){
-   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
-   this.classList.add('active');
-   document.querySelectorAll('main section').forEach(sec=>sec.classList.remove('active'));
-   document.getElementById(this.getAttribute('data-target')).classList.add('active');
- });
-});
-
-// Username and color
+const storage = firebase.storage();
+firebase.auth().signInAnonymously().catch(function(err){ console.log(err); });
+// Global state
+var uid = null;
+firebase.auth().onAuthStateChanged(function(user){ if(user){ uid = user.uid; pushProfile(); } });
 var username = localStorage.getItem('3ds_username') || '';
 var userColor = localStorage.getItem('3ds_user_color') || '#0066cc';
-function refreshUserBar(){
- document.getElementById('display-user').textContent = 'User: '+username;
- document.getElementById('color-swatch').style.background = userColor;
- document.getElementById('user-bar').style.display = 'block';
+var ROOM_ID = 'family-room';
+var lastSendAt = 0;
+// Helper functions
+function $(id){ return document.getElementById(id); }
+function uiNotice(msg){ var u = $('ui-msg'); if(!u) return; u.textContent = msg; setTimeout(function(){ if(u.textContent === msg) u.textContent = ''; }, 2500); }
+function is3DS(){ var ua = (navigator.userAgent||'').toLowerCase(); return ua.indexOf('nintendo')!==-1 || ua.indexOf('3ds')!==-1 || ua.indexOf('nintendobrowser')!==-1; }
+function contrast(hex){ if(!hex) return '#000'; hex = hex.replace('#',''); if(hex.length===3) hex = hex.split('').map(function(c){ return c+c; }).join(''); var r = parseInt(hex.substr(0,2),16), g = parseInt(hex.substr(2,2),16), b = parseInt(hex.substr(4,2),16); var lum = (0.299*r + 0.587*g + 0.114*b)/255; return lum>0.6?'#000':'#fff'; }
+// Initialize UI and features
+function initUI(){
+  if(is3DS()){ document.body.className = (document.body.className+' compat-3ds').trim(); $('wb-mode').value = 'pixel'; $('wb-mode').dispatchEvent(new Event('change')); }
+  // nav buttons
+  document.querySelectorAll('nav button').forEach(function(btn){ btn.addEventListener('click', function(){ document.querySelectorAll('nav button').forEach(function(b){ b.classList.remove('active'); }); this.classList.add('active'); var target = this.getAttribute('data-target'); document.querySelectorAll('main section').forEach(function(sec){ sec.classList.remove('active'); }); $(target).classList.add('active'); }, false); });
+  // Prefill and save user
+  $('username-input').value = username;
+  $('user-color').value = userColor;
+  $('room-name').value = ROOM_ID;
+  $('save-user').addEventListener('click', function(){ var name = $('username-input').value.trim().substring(0,20) || 'Guest'; var color = $('user-color').value || '#0066cc'; username = name; userColor = color; try{ localStorage.setItem('3ds_username', name); localStorage.setItem('3ds_user_color', color); }catch(e){} pushProfile(); uiNotice('Saved'); }, false);
+  $('join-room').addEventListener('click', function(){ var r = $('room-name').value.trim(); var p = $('room-pass').value || ''; if(!r){ uiNotice('Enter room'); return; } if(db){ tryJoinRoom(r,p,function(err,ok){ if(err){ uiNotice('Error joining'); return; } if(ok){ ROOM_ID=r; setupRoom(); uiNotice('Joined'); } else { uiNotice('Bad password'); } }); } else { ROOM_ID=r; setupRoom(); uiNotice('Local room'); } }, false);
+  $('create-room').addEventListener('click', function(){ var r = $('room-name').value.trim(); var p = $('room-pass').value || ''; if(!r){ uiNotice('Enter new room'); return; } if(db){ createRoomMeta(r,p||null,function(err){ if(err){ uiNotice('Create failed'); } else { ROOM_ID=r; setupRoom(); uiNotice('Created'); } }); } else { ROOM_ID=r; setupRoom(); uiNotice('Local room'); } }, false);
+  // Chat send
+  $('send-btn').addEventListener('click', function(){ var text = $('chat-input').value.trim(); sendMessage(text); }, false);
+  $('chat-input').addEventListener('keydown', function(ev){ if(ev.keyCode===13){ ev.preventDefault(); $('send-btn').click(); } });
+  // Notes
+  $('save-note').addEventListener('click', function(){ localStorage.setItem('family_notepad', $('notepad').value); uiNotice('Note saved'); }, false);
+  $('load-note').addEventListener('click', function(){ $('notepad').value = localStorage.getItem('family_notepad') || ''; uiNotice('Note loaded'); }, false);
+  // Games
+  initTicTacToe(); initRPS();
+  // Whiteboard
+  initWhiteboard();
+  // Calendar
+  initCalendar();
 }
-function promptUser(){
- var name = prompt('Enter your display name:', username||'');
- if(name!==null){
-   username = name.trim()||'Guest';
-   localStorage.setItem('3ds_username', username);
- }
- var color = prompt('Enter a hex color (e.g., #0066cc):', userColor);
- if(color!==null && /^#([0-9A-F]{3}){1,2}$/i.test(color)){
-   userColor = color;
-   localStorage.setItem('3ds_user_color', userColor);
- }
- refreshUserBar();
-}
-if(!username){
- promptUser();
-} else {
- refreshUserBar();
-}
-document.getElementById('change-user').addEventListener('click', promptUser);
-
-// Chat functions
-const ROOM_ID = 'family-room';
-function sendMessage(text){
- if(!text) return;
- db.collection('rooms').doc(ROOM_ID).collection('messages').add({
-   user: username,
-   color: userColor,
-   text: text,
-   ts: firebase.firestore.FieldValue.serverTimestamp()
- });
-}
-function listenChat(){
- db.collection('rooms').doc(ROOM_ID).collection('messages').orderBy('ts').limit(200)
- .onSnapshot(function(snapshot){
-   var msgs = document.getElementById('messages');
-   msgs.innerHTML = '';
-   snapshot.forEach(function(doc){
-     var m = doc.data();
-     var li = document.createElement('li');
-     var time = m.ts ? m.ts.toDate().toLocaleTimeString() : '';
-     li.textContent = '['+time+'] '+ (m.user||'Anon')+': '+ m.text;
-     li.style.borderLeft = '6px solid '+(m.color||'#ccc');
-     li.style.paddingLeft = '4px';
-     msgs.appendChild(li);
-   });
-   msgs.scrollTop = msgs.scrollHeight;
- });
-}
-listenChat();
-document.getElementById('send-btn').addEventListener('click', function(){
- var input = document.getElementById('chat-input');
- var text = input.value.trim();
- if(text){ sendMessage(text); input.value = ''; }
-});
-document.getElementById('chat-input').addEventListener('keydown', function(e){
- if(e.key==='Enter'){ e.preventDefault(); document.getElementById('send-btn').click(); }
-});
-
-// Tic-Tac-Toe
-let tState, tTurn;
-function initTic(){
- tState = Array(9).fill(null);
- tTurn = 'X';
- const board = document.getElementById('tictactoe-board');
- board.innerHTML = '';
- for(let i=0;i<3;i++){
-   const row = document.createElement('tr');
-   for(let j=0;j<3;j++){
-     const cell = document.createElement('td');
-     cell.textContent='';
-     cell.addEventListener('click', function(){
-       if(tState[i*3+j] || checkWin()) return;
-       tState[i*3+j] = tTurn;
-       cell.textContent = tTurn;
-       if(checkWin()){
-         document.getElementById('tic-status').textContent = 'Player '+tTurn+' wins!';
-       } else if(tState.every(Boolean)){
-         document.getElementById('tic-status').textContent = 'Draw!';
-       } else {
-         tTurn = tTurn==='X'?'O':'X';
-         document.getElementById('tic-status').textContent = 'Player '+tTurn+"'s turn";
-       }
-     });
-     row.appendChild(cell);
-   }
-   board.appendChild(row);
- }
- document.getElementById('tic-status').textContent = "Player X's turn";
-}
-function checkWin(){
- const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
- return lines.some(([a,b,c])=> tState[a] && tState[a]===tState[b] && tState[b]===tState[c]);
-}
-initTic();
-
-// Rock-Paper-Scissors
-document.querySelectorAll('.rps-btn').forEach(btn=>{
- btn.addEventListener('click', function(){
-   const user = this.getAttribute('data-choice');
-   const options = ['rock','paper','scissors'];
-   const cpu = options[Math.floor(Math.random()*3)];
-   let result;
-   if(user===cpu) result='Draw';
-   else if((user==='rock'&&cpu==='scissors')||(user==='paper'&&cpu==='rock')||(user==='scissors'&&cpu==='paper')) result='You win';
-   else result='You lose';
-   document.getElementById('rps-result').textContent = 'You: '+user+' CPU: '+cpu+' - '+result;
- });
-});
-
-// Calendar (local)
-let calDate = new Date();
-function renderCalendar(){
- const year = calDate.getFullYear();
- const month = calDate.getMonth();
- document.getElementById('cal-title').textContent = calDate.toLocaleString('default',{month:'long'})+' '+year;
- const table = document.getElementById('calendar-table');
- table.innerHTML = '';
- const firstDay = new Date(year,month,1).getDay();
- const daysInMonth = new Date(year,month+1,0).getDate();
- let tr = document.createElement('tr');
- // Weekday headers
- ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d=>{
-   const th = document.createElement('th');
-   th.textContent = d;
-   tr.appendChild(th);
- });
- table.appendChild(tr);
- // cells
- tr = document.createElement('tr');
- for(let i=0;i<firstDay;i++){
-   tr.appendChild(document.createElement('td'));
- }
- let day=1;
- for(let i=firstDay;i<7;i++){
-   tr.appendChild(createDayCell(year, month, day++));
- }
- table.appendChild(tr);
- while(day<=daysInMonth){
-   tr = document.createElement('tr');
-   for(let i=0;i<7 && day<=daysInMonth;i++){
-     tr.appendChild(createDayCell(year, month, day++));
-   }
-   table.appendChild(tr);
- }
-}
-function createDayCell(y,m,d){
- const td = document.createElement('td');
- td.textContent = d;
- const key = y+'-'+(m+1)+'-'+d;
- const note = localStorage.getItem('calNote-'+key);
- if(note){
-   const span = document.createElement('span');
-   span.className='event';
-   span.textContent = note.substring(0,10);
-   td.appendChild(span);
- }
- td.addEventListener('click', function(){
-   const existing = localStorage.getItem('calNote-'+key) || '';
-   const note = prompt('Enter note for '+key+':', existing);
-   if(note!==null){
-     if(note===''){ localStorage.removeItem('calNote-'+key); }
-     else { localStorage.setItem('calNote-'+key, note); }
-     renderCalendar();
-   }
- });
- return td;
-}
-document.getElementById('prev-month').addEventListener('click', function(){
- calDate.setMonth(calDate.getMonth()-1);
- renderCalendar();
-});
-document.getElementById('next-month').addEventListener('click', function(){
- calDate.setMonth(calDate.getMonth()+1);
- renderCalendar();
-});
-renderCalendar();
-
-// Notes
-const noteArea = document.getElementById('notepad');
-noteArea.value = localStorage.getItem('notepad') || '';
-document.getElementById('save-note').addEventListener('click', function(){
- localStorage.setItem('notepad', noteArea.value);
- alert('Saved!');
-});
-document.getElementById('load-note').addEventListener('click', function(){
- noteArea.value = localStorage.getItem('notepad') || '';
- alert('Loaded!');
-});
-
+// Profile push
+function pushProfile(){ if(!db || !uid) return; var prof = { name: username || 'Guest', color: userColor || '#666', ts: Date.now() }; db.collection('rooms').doc(ROOM_ID).collection('members').doc(uid).set(prof); db.collection('rooms').doc(ROOM_ID).collection('presence').doc(uid).set(prof); db.collection('rooms').doc(ROOM_ID).collection('presence').doc(uid).onDisconnect().delete(); }
+// Room meta creation
+function createRoomMeta(roomId,password,cb){ if(!db){ cb&&cb(null); return; } var metaRef = db.collection('rooms').doc(roomId).collection('_meta').doc('config'); if(!password){ metaRef.set({ creator: uid||'anon', ts: Date.now() }).then(function(){ cb&&cb(null); }); return; } var salt = Math.abs(Math.floor(Math.random()*1e9)).toString(36); hashText(salt+password,function(err,h){ metaRef.set({ creator: uid||'anon', ts: Date.now(), salt: salt, hash: h }).then(function(){ cb&&cb(null); }); }); }
+function tryJoinRoom(roomId,password,cb){ if(!db){ cb&&cb(null,true); return; } var metaRef = db.collection('rooms').doc(roomId).collection('_meta').doc('config'); metaRef.get().then(function(doc){ var meta = doc.exists?doc.data():null; if(!meta || !meta.hash){ cb&&cb(null,true); return; } hashText(meta.salt + (password||''),function(err,h){ if(h===meta.hash){ cb&&cb(null,true); } else { cb&&cb(null,false); } }); }).catch(function(err){ cb&&cb(err,false); }); }
+function simpleHash(str){ var h=5381; for(var i=0;i<str.length;i++){ h=((h<<5)+h)+str.charCodeAt(i); h=h&0xffffffff; } var hex=(h>>>0).toString(16); while(hex.length<8) hex='0'+hex; return hex; }
+function hashText(text,callback){ if(window.crypto && window.crypto.subtle && window.TextEncoder){ try{ var enc = new TextEncoder(); window.crypto.subtle.digest('SHA-256', enc.encode(text)).then(function(buf){ var arr=Array.from(new Uint8Array(buf)); var hex=arr.map(function(b){ var s=b.toString(16); return s.length==1?'0'+s:s; }).join(''); callback(null,hex); }).catch(function(){ callback(null,simpleHash(text)); }); return; }catch(e){} } callback(null,simpleHash(text)); }
+// Chat
+function sendMessage(text){ if(!text) return; if(text.length>500){ uiNotice('Max 500 chars'); return; } var now = Date.now(); if(now - lastSendAt < 3000){ uiNotice('Slow down'); return; } lastSendAt = now; var payload = { user: username||'Guest', color: userColor||'#666', text: text, ts: firebase.firestore.FieldValue.serverTimestamp(), uid: uid||'anon' }; if(db){ db.collection('rooms').doc(ROOM_ID).collection('messages').add(payload); } else { appendLocalChat(payload); } $('chat-input').value = ''; }
+function listenChat(){ if(!db) return; db.collection('rooms').doc(ROOM_ID).collection('messages').orderBy('ts').limit(200).onSnapshot(function(snap){ var msgs=$('messages'); msgs.innerHTML=''; snap.forEach(function(doc){ var m=doc.data(); var li=document.createElement('li'); var time=m.ts?m.ts.toDate().toLocaleTimeString():''; li.textContent='['+time+'] '+ (m.user||'Anon')+': '+m.text; li.style.borderLeft='6px solid '+(m.color||'#ccc'); li.style.paddingLeft='4px'; msgs.appendChild(li); }); msgs.scrollTop=msgs.scrollHeight; }); }
+function appendLocalChat(m){ var msgs=$('messages'); var li=document.createElement('li'); li.textContent='['+ new Date().toLocaleTimeString()+'] '+m.user+': '+m.text; li.style.borderLeft='6px solid '+m.color; li.style.paddingLeft='4px'; msgs.appendChild(li); msgs.scrollTop = msgs.scrollHeight; }
+function listenPresence(){ if(!db) return; db.collection('rooms').doc(ROOM_ID).collection('members').onSnapshot(function(snap){ var list=$('members-list'); list.innerHTML=''; snap.forEach(function(doc){ var d=doc.data(); var span=document.createElement('span'); span.textContent=d.name || 'Anon'; span.style.background=d.color || '#ddd'; span.style.color=contrast(d.color || '#ddd'); span.style.padding='2px 4px'; span.style.borderRadius='3px'; span.style.marginRight='4px'; list.appendChild(span); }); }); }
+function setupRoom(){ $('room-label').textContent=ROOM_ID; pushProfile(); listenChat(); listenPresence(); }
+// TicTacToe
+var tState, tTurn;
+function initTicTacToe(){ tState = Array(9).fill(null); tTurn = 'X'; var board=$('tictactoe-board'); board.innerHTML=''; for(var i=0;i<3;i++){ var row=document.createElement('tr'); for(var j=0;j<3;j++){ (function(index){ var cell=document.createElement('td'); cell.addEventListener('click', function(){ if(tState[index]|| checkWin()) return; tState[index]=tTurn; this.textContent=tTurn; if(checkWin()){ $('tic-status').textContent=tTurn+' wins!'; } else if(tState.every(function(x){ return x; })){ $('tic-status').textContent='Draw'; } tTurn=(tTurn==='X'?'O':'X'); }, false); row.appendChild(cell); })(i*3+j); } board.appendChild(row); } }
+function checkWin(){ var w=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]; for(var i=0;i<w.length;i++){ var a=w[i][0],b=w[i][1],c=w[i][2]; if(tState[a]&&tState[a]===tState[b]&&tState[a]===tState[c]) return true; } return false; }
+// RPS
+function initRPS(){ document.querySelectorAll('.rps-btn').forEach(function(btn){ btn.addEventListener('click', function(){ var choice=this.getAttribute('data-choice'); var cpu=['rock','paper','scissors'][Math.floor(Math.random()*3)]; var res=''; if(choice===cpu) res='Tie!'; else if((choice==='rock'&&cpu==='scissors')||(choice==='paper'&&cpu==='rock')||(choice==='scissors'&&cpu==='paper')) res='You win!'; else res='CPU wins!'; $('rps-result').textContent='You: '+choice+' | CPU: '+cpu+' | '+res; }, false); }); }
 // Whiteboard
-const wbCanvas = document.getElementById('whiteboard-canvas');
-const wbCtx = wbCanvas.getContext('2d');
-let drawing=false;
-function startDraw(e){
- drawing=true;
- const rect = wbCanvas.getBoundingClientRect();
- const x = (e.clientX||e.touches[0].clientX) - rect.left;
- const y = (e.clientY||e.touches[0].clientY) - rect.top;
- wbCtx.beginPath();
- wbCtx.moveTo(x,y);
+var canvas=null, ctx=null, pixelGrid=null, currentTool='brush', currentStroke=null, strokeBuffer=[], strokeTimer=null, strokesRef=null;
+function initWhiteboard(){ canvas=$('whiteboard-canvas'); ctx=canvas.getContext?canvas.getContext('2d'):null; pixelGrid=$('pixel-grid'); document.querySelectorAll('#wb-toolbar .btn[data-mode]').forEach(function(btn){ btn.addEventListener('click', function(){ currentTool=this.getAttribute('data-mode'); document.querySelectorAll('#wb-toolbar .btn').forEach(function(b){ b.classList.remove('active'); }); this.classList.add('active'); }, false); }); $('wb-mode').addEventListener('change', function(){ if(this.value==='pixel'){ canvas.style.display='none'; pixelGrid.style.display='block'; } else { canvas.style.display='block'; pixelGrid.style.display='none'; } }, false); buildPixelGrid(); function getPoint(evt){ var rect=canvas.getBoundingClientRect(); if(canvas.width !== Math.round(rect.width) || canvas.height !== Math.round(rect.height)){ canvas.width=Math.round(rect.width); canvas.height=Math.round(rect.height); }
+    var clientX=(typeof evt.clientX!=='undefined')?evt.clientX:(evt.touches&&evt.touches[0]&&evt.touches[0].clientX);
+    var clientY=(typeof evt.clientY!=='undefined')?evt.clientY:(evt.touches&&evt.touches[0]&&evt.touches[0].clientY);
+    var scaleX=canvas.width/rect.width; var scaleY=canvas.height/rect.height; var x=(clientX-rect.left)*scaleX; var y=(clientY-rect.top)*scaleY; return [x,y]; }
+  canvas.addEventListener('mousedown', function(e){ if(currentTool==='text'){ var p=getPoint(e); var t=prompt('Text:',''); if(t){ ctx.fillStyle=$('wb-color').value; ctx.font=(parseInt($('wb-size').value,10)*3)+'px sans-serif'; ctx.fillText(t,p[0],p[1]); } return; } if(currentTool==='stamp'){ var p=getPoint(e); var stamp=['★','❤','✎','☺','♪'][Math.floor(Math.random()*5)]; ctx.fillStyle=$('wb-color').value; ctx.font=(parseInt($('wb-size').value,10)*6)+'px sans-serif'; ctx.fillText(stamp,p[0],p[1]); return; } var p=getPoint(e); beginStroke(p[0],p[1]); }, false);
+  window.addEventListener('mousemove', function(e){ if(currentStroke){ var p=getPoint(e); pushPoint(p[0],p[1]); } }, false);
+  window.addEventListener('mouseup', function(){ if(currentStroke){ endStroke(); } }, false);
+  canvas.addEventListener('touchstart', function(e){ e.preventDefault(); if(currentTool==='text'){ var p=getPoint(e); var t=prompt('Text:',''); if(t){ ctx.fillStyle=$('wb-color').value; ctx.font=(parseInt($('wb-size').value,10)*3)+'px sans-serif'; ctx.fillText(t,p[0],p[1]); } return; } if(currentTool==='stamp'){ var p=getPoint(e); var stamp=['★','❤','✎','☺','♪'][Math.floor(Math.random()*5)]; ctx.fillStyle=$('wb-color').value; ctx.font=(parseInt($('wb-size').value,10)*6)+'px sans-serif'; ctx.fillText(stamp,p[0],p[1]); return; } var p=getPoint(e); beginStroke(p[0],p[1]); }, false);
+  canvas.addEventListener('touchmove', function(e){ e.preventDefault(); if(currentStroke){ var p=getPoint(e); pushPoint(p[0],p[1]); } }, false);
+  canvas.addEventListener('touchend', function(){ if(currentStroke){ endStroke(); } }, false);
+  $('wb-clear').addEventListener('click', function(){ ctx.clearRect(0,0,canvas.width,canvas.height); pixelGrid.querySelectorAll('.cell').forEach(function(c){ c.style.background='#fff'; }); }, false);
+  $('wb-save').addEventListener('click', function(){ var snap=canvas.toDataURL('image/png'); localStorage.setItem('wb_snapshot', snap); uiNotice('Saved'); }, false);
+  $('wb-export').addEventListener('click', function(){ var dataUrl=canvas.toDataURL('image/png'); if(is3DS() && storage){ var path='boards/'+ROOM_ID+'/'+(uid||'anon')+'_'+Date.now()+'.png'; storage.ref().child(path).putString(dataUrl,'data_url').then(function(){ uiNotice('Saved to cloud'); }); } else { var a=document.createElement('a'); a.href=dataUrl; a.download='drawing_'+Date.now()+'.png'; document.body.appendChild(a); a.click(); document.body.removeChild(a); uiNotice('Downloaded'); } }, false);
+  // load snapshot
+  var snap=localStorage.getItem('wb_snapshot'); if(snap && ctx){ var img=new Image(); img.onload=function(){ ctx.drawImage(img,0,0,canvas.width,canvas.height); }; img.src=snap; }
 }
-function moveDraw(e){
- if(!drawing) return;
- const rect = wbCanvas.getBoundingClientRect();
- const x = (e.clientX||e.touches[0].clientX) - rect.left;
- const y = (e.clientY||e.touches[0].clientY) - rect.top;
- wbCtx.lineTo(x,y);
- wbCtx.stroke();
+function beginStroke(x,y){ currentStroke={ color:$('wb-color').value, size:parseInt($('wb-size').value,10), points:[[x,y]] }; ctx.beginPath(); ctx.arc(x,y,currentStroke.size/2,0,Math.PI*2); ctx.fillStyle=currentStroke.color; ctx.fill(); strokeBuffer=[]; }
+function pushPoint(x,y){ if(!currentStroke) return; var pts=currentStroke.points; pts.push([x,y]); ctx.beginPath(); ctx.moveTo(pts[pts.length-2][0], pts[pts.length-2][1]); ctx.lineTo(x,y); ctx.strokeStyle=currentStroke.color; ctx.lineWidth=currentStroke.size; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.stroke(); strokeBuffer.push({ type:'stroke', color: currentStroke.color, size: currentStroke.size, points:[[x,y]] }); if(!strokeTimer){ strokeTimer=setTimeout(function(){ strokeTimer=null; if(strokeBuffer.length && strokesRef){ strokesRef.add({ pts: strokeBuffer, ts: Date.now(), clientId: uid||'anon' }); } strokeBuffer=[]; }, 300); } }
+function endStroke(){ if(!currentStroke) return; if(strokesRef){ strokesRef.add({ pts:[{ type:'stroke', color: currentStroke.color, size: currentStroke.size, points: currentStroke.points }], ts: Date.now(), clientId: uid||'anon' }); } currentStroke=null; strokeBuffer=[]; }
+function buildPixelGrid(){ var cols=32, rows=20; pixelGrid.innerHTML=''; pixelGrid.style.width=(cols*16)+'px'; for(var r=0;r<rows;r++){ for(var c=0;c<cols;c++){ (function(rr,cc){ var cell=document.createElement('div'); cell.className='cell'; cell.style.width='16px'; cell.style.height='16px'; cell.setAttribute('data-r',rr); cell.setAttribute('data-c',cc); cell.style.background='#fff'; cell.addEventListener('click', function(){ var col=$('wb-color').value; this.style.background=col; if(strokesRef){ strokesRef.add({ pts:[{ type:'pixel', r: rr, c: cc, color: col }], ts: Date.now(), clientId: uid||'anon' }); } }, false); pixelGrid.appendChild(cell); })(r,c); } var br=document.createElement('div'); br.style.clear='both'; pixelGrid.appendChild(br); } }
+// Calendar (simple local notes)
+var currentDate = new Date();
+function initCalendar(){ renderCalendar(currentDate); $('prev-month').addEventListener('click', function(){ currentDate.setMonth(currentDate.getMonth()-1); renderCalendar(currentDate); }, false); $('next-month').addEventListener('click', function(){ currentDate.setMonth(currentDate.getMonth()+1); renderCalendar(currentDate); }, false); }
+function renderCalendar(date){ var year=date.getFullYear(); var month=date.getMonth(); var first=new Date(year,month,1); var last=new Date(year,month+1,0); $('cal-title').textContent=year+'-'+(('0'+(month+1)).slice(-2)); var tbl=$('calendar-table'); tbl.innerHTML=''; var header=document.createElement('tr'); ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(function(d){ var th=document.createElement('th'); th.textContent=d; header.appendChild(th); }); tbl.appendChild(header); var row=document.createElement('tr'); for(var i=0;i<first.getDay();i++){ row.appendChild(document.createElement('td')); }
+  for(var d=1; d<=last.getDate(); d++){ if(row.children.length===7){ tbl.appendChild(row); row=document.createElement('tr'); } var td=document.createElement('td'); var span=document.createElement('div'); span.textContent=d; span.style.fontWeight='700'; td.appendChild(span); var iso=year+'-'+(('0'+(month+1)).slice(-2))+'-'+(('0'+d).slice(-2)); td.setAttribute('data-date', iso);
+      td.addEventListener('click', function(){ var dd=this.getAttribute('data-date'); var note=prompt('Note for '+dd+':', localStorage.getItem('calNote-'+dd)||''); if(note!==null){ localStorage.setItem('calNote-'+dd, note); renderCalendar(date); } }, false);
+      var noteTxt=localStorage.getItem('calNote-'+iso); if(noteTxt){ var ev=document.createElement('span'); ev.className='event-badge'; ev.textContent=noteTxt.substring(0,15); td.appendChild(ev); }
+      row.appendChild(td);
+    }
+  while(row.children.length<7){ row.appendChild(document.createElement('td')); }
+  tbl.appendChild(row);
 }
-function endDraw(){ drawing=false; saveCanvas(); }
-wbCanvas.addEventListener('mousedown', startDraw);
-wbCanvas.addEventListener('mousemove', moveDraw);
-window.addEventListener('mouseup', endDraw);
-wbCanvas.addEventListener('touchstart', function(e){e.preventDefault(); startDraw(e);});
-wbCanvas.addEventListener('touchmove', function(e){e.preventDefault(); moveDraw(e);});
-wbCanvas.addEventListener('touchend', function(e){e.preventDefault(); endDraw();});
-function clearCanvas(){
- wbCtx.clearRect(0,0,wbCanvas.width, wbCanvas.height);
- saveCanvas();
-}
-function saveCanvas(){
- try{ localStorage.setItem('whiteboard', wbCanvas.toDataURL()); }catch(e){}
-}
-function loadCanvas(){
- try{
-   const data = localStorage.getItem('whiteboard');
-   if(data){
-     const img = new Image();
-     img.onload = function(){ wbCtx.clearRect(0,0,wbCanvas.width,wbCanvas.height); wbCtx.drawImage(img,0,0); };
-     img.src = data;
-   }
- }catch(e){}
-}
-function exportCanvas(){
- const data = wbCanvas.toDataURL('image/png');
- const a = document.createElement('a');
- a.href = data;
- a.download = 'drawing.png';
- a.click();
-}
-document.getElementById('clear-canvas').addEventListener('click', function(){ clearCanvas(); });
-document.getElementById('save-canvas').addEventListener('click', function(){ saveCanvas(); alert('Saved'); });
-document.getElementById('load-canvas').addEventListener('click', function(){ loadCanvas(); alert('Loaded'); });
-document.getElementById('export-canvas').addEventListener('click', function(){ exportCanvas(); });
-// load saved drawing
-loadCanvas();
+// Initialize after DOM ready
+document.addEventListener('DOMContentLoaded', function(){ initUI(); setupRoom(); }, false);
 </script>
 </body>
 </html>
