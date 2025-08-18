@@ -51,6 +51,10 @@
   .compat-3ds #calendar-table th,.compat-3ds #calendar-table td{font-size:14px;}
   .compat-3ds .controls input, .compat-3ds .controls button{font-size:16px;padding:8px;}
   .compat-3ds #whiteboard-canvas{height:280px;}
+  /* Calendar modal for editing notes (no popups) */
+  #cal-modal{display:none;position:fixed;left:10%;right:10%;top:30%;background:#fff;border:2px solid #333;padding:8px;border-radius:4px;z-index:10000;}
+  #cal-modal input[type="text"]{width:100%;padding:6px;border:1px solid #ccc;border-radius:3px;font-size:14px;margin-bottom:6px;}
+  #cal-modal button{padding:6px 8px;font-size:14px;border:1px solid #aaa;border-radius:3px;margin-right:6px;}
 </style>
 <!-- Firebase scripts -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
