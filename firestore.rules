@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+
+    match /rooms/{roomId} {
+
+      match /_meta/config {
+        allow read: if isMember(roomId);
+        allow create: if request.auth != null;
+        allow update, delete: if isOwner(roomId);
+      }
+
+      match /members/{uid} {
+        allow read: if isMember(roomId);
+
+        // user can update own non-role fields
+        allow update: if request.auth != null
+                      && request.auth.uid == uid
+                      && (request.resource.data.role == resource.data.role || !(request.resource.data.keys().hasAny(['role'])));
+
+        // owner can set any role
+        allow update: if isOwner(roomId);
+
+        // operator can only set others to member/guest; never touch owners; never self
+        allow update: if isOperator(roomId)
+                      && uid != request.auth.uid
+                      && resource.data.role != 'owner'
+                      && (request.resource.data.role in ['member','guest']);
+
+        allow create: if request.auth != null && request.auth.uid == uid;
+        allow delete: if isOwner(roomId);
+      }
+
+      match /messages/{msgId} {
+        allow read: if isMember(roomId);
+        allow create: if request.auth != null
+                      && isMember(roomId)
+                      && !isRole(roomId,'guest')
+                      && validMsg(request.resource.data)
+                      && !isBanned(roomId, request.auth.uid);
+        allow delete: if isOwner(roomId) || isOperator(roomId);
+        allow update: if false;
+      }
+
+      match /calendar/{eventId} {
+        allow read: if resource.data.visibility == 'public' || isMember(roomId);
+        allow create: if request.auth != null && isMember(roomId) && !isRole(roomId,'guest') && validEvent(request.resource.data);
+        allow update: if request.auth != null && isMember(roomId) && !isRole(roomId,'guest')
+                      && validEvent(request.resource.data)
+                      && request.resource.data.version == resource.data.version + 1;
+        allow delete: if isOwner(roomId) || isOperator(roomId);
+      }
+
+      match /commands/{cmdId} {
+        allow read: if false;
+        allow create: if request.auth != null && isOwner(roomId);
+        allow update, delete: if false;
+      }
+
+      match /bans/{uid} {
+        allow read: if request.auth != null && request.auth.uid == uid;
+        allow write: if false;
+      }
+    }
+
+    function isMember(roomId) {
+      return request.auth != null &&
+        exists(/databases/$(db)/documents/rooms/$(roomId)/members/$(request.auth.uid));
+    }
+    function roleOf(roomId) {
+      return get(/databases/$(db)/documents/rooms/$(roomId)/members/$(request.auth.uid)).data.role;
+    }
+    function isRole(roomId, r) { return isMember(roomId) && roleOf(roomId) == r; }
+    function isOwner(roomId) { return isRole(roomId, 'owner'); }
+    function isOperator(roomId) { return isRole(roomId, 'operator'); }
+
+    function validMsg(d) {
+      return d.text is string && d.text.size() <= 1000 &&
+             d.user is string && request.resource.size < 4000;
+    }
+    function validEvent(d) {
+      return d.title is string && d.title.size() <= 200 &&
+             d.startTs is number && (d.endTs is number || d.endTs == null) &&
+             request.resource.size < 20000;
+    }
+    function isBanned(roomId, uid) {
+      return exists(/databases/$(db)/documents/rooms/$(roomId)/bans/$(uid)) &&
+             get(/databases/$(db)/documents/rooms/$(roomId)/bans/$(uid)).data.until > request.time.toMillis();
+    }
+  }
+}
